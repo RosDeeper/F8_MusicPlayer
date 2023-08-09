@@ -70,9 +70,10 @@
         const prevBtn = $('.btn-prev')
         const ranBtn = $('.btn-random')
         const repeatBtn = $('.btn-repeat')
+        const playlist = $('.playlist')
 
         const app = {
-            currentIndex: 5,
+            currentIndex: 0,
             song: [
                 {
                     singer: 'Son Tung M-TP',
@@ -124,9 +125,9 @@
             ],
             
             render: function() {
-                const htmls = this.song.map(a => {
+                const htmls = this.song.map((a, i) => {
                     return `
-                        <div class="song">
+                        <div class="song ${i == this.currentIndex ? 'active' : ''}" data-index="${i}">
                             <div class="thumb" style="background-image: url('${a.img}')">
                             </div>
                             <div class="body">
@@ -140,7 +141,7 @@
                     `
                 })
 
-                $('.playlist').innerHTML = htmls.join('')
+                playlist.innerHTML = htmls.join('')
             },
 
             defineProperties: function() {
@@ -189,10 +190,6 @@
                     player.classList.remove('playing')
                     cdAnimation.pause()
                 }
-                progress.onchange = function(e) {
-                    const seekTime = Math.floor(audio.duration / 100 * e.target.value)
-                    audio.currentTime = seekTime
-                }
 
                 // Play/pause music
                 playbtn.onclick = function() {
@@ -211,7 +208,8 @@
                         _this.nextSong()
                     }
                     audio.play()
-                    cdAnimation.play()
+                    _this.render()
+                    _this.scrollSongToView()
                 }
                 prevBtn.onclick = function() {
                     if(_this.isRandom) {
@@ -220,7 +218,8 @@
                         _this.previousSong()
                     }
                     audio.play()
-                    cdAnimation.play()
+                    _this.render()
+                    _this.scrollSongToView()
                 }
 
                 // Shuffle music
@@ -242,6 +241,10 @@
                         progress.value = processPercent
                     }
                 }
+                progress.onchange = function(e) {
+                    const seekTime = Math.floor(audio.duration / 100 * e.target.value)
+                    audio.currentTime = seekTime
+                }
 
                 // Music end
                 audio.onended = function() {
@@ -249,6 +252,19 @@
                         audio.play()
                     } else {
                         nextBtn.click()
+                    }
+                }
+
+                // Click on playlist 
+                playlist.onclick = function(e) {
+                    const songClick = e.target.closest('.song:not(.active)')
+                    if(songClick || e.target.closest('.option')) {
+                        if(songClick) {
+                            _this.currentIndex = songClick.dataset.index
+                            _this.loadCurrentSong()
+                            _this.render()
+                            audio.play()
+                        }
                     }
                 }
             },
@@ -285,8 +301,16 @@
                 this.loadCurrentSong()
             },
 
-            repeatSong: function() {
-
+            scrollSongToView: function() {
+                setTimeout(() => {
+                    $('.song.active').scrollIntoView(
+                    {
+                        behavior: 'smooth',
+                        block: 'end',
+                    }
+                )
+                }, 300)
+                
             },
 
             start: function() {
