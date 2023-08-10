@@ -72,8 +72,11 @@
         const repeatBtn = $('.btn-repeat')
         const playlist = $('.playlist')
 
+        const PLAYER_STORAGE = 'F8-player'
+
         const app = {
             currentIndex: 0,
+            config: JSON.parse(localStorage.getItem(PLAYER_STORAGE)) || {},
             song: [
                 {
                     singer: 'Son Tung M-TP',
@@ -123,7 +126,12 @@
                     img: './assets/img/song8.jpg'
                 }
             ],
-            
+
+            setConfig: function(key, value) {
+                this.config[key] = value;
+                localStorage.setItem(PLAYER_STORAGE, JSON.stringify(this.config));
+            },
+
             render: function() {
                 const htmls = this.song.map((a, i) => {
                     return `
@@ -226,12 +234,14 @@
                 ranBtn.onclick = function() {
                     _this.isRandom = !_this.isRandom
                     ranBtn.classList.toggle('active', _this.isRandom)
+                    _this.setConfig('isRandom', _this.isRandom)
                 }
 
                 // Repeat music
                 repeatBtn.onclick = function() {
                     _this.isRepeat = !_this.isRepeat
                     repeatBtn.classList.toggle('active', _this.isRepeat)
+                    _this.setConfig('isRepeat', _this.isRepeat)
                 }
 
                 // Seek music
@@ -274,7 +284,12 @@
                 cdThumb.style.backgroundImage = `url('${this.currentSong.img}')`
                 audio.src = this.currentSong.path
             },
-
+            
+            loadConfig: function() {
+                this.isRandom = this.config.isRandom
+                this.isRepeat = this.config.isRepeat
+            },
+            
             nextSong: function() {
                 this.currentIndex += 1
                 if(this.currentIndex >= this.song.length) {
@@ -314,10 +329,14 @@
             },
 
             start: function() {
+                this.loadConfig()
                 this.defineProperties()
                 this.loadCurrentSong()
                 this.handleEvent()
                 this.render()
+
+                ranBtn.classList.toggle('active', this.isRandom)
+                repeatBtn.classList.toggle('active', this.isRepeat)
             }
         }
         
